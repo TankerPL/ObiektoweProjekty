@@ -1,14 +1,24 @@
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-public class Reservation {
+public class Reservation implements CSVInterface {
     private Date checkIn = null;
     private Date checkOut = null;
     private int days = 0;
-    private int roomNumber = 0;
+    private ArrayList<Integer> roomNumbers = new ArrayList<>();
     private String guestUsername = null;
 
     public Reservation(int roomNumber, String guestUsername, Date checkIn, Date checkOut) {
-        this.roomNumber = roomNumber;
+        this.roomNumbers.add(roomNumber);
+        this.guestUsername = guestUsername;
+        this.checkIn = checkIn;
+        this.checkOut = checkOut;
+        this.days = getDaysBetweenDates(checkIn, checkOut);
+    }
+
+    public Reservation(List<Integer> roomNumbers, String guestUsername, Date checkIn, Date checkOut) {
+        this.roomNumbers.addAll(roomNumbers);
         this.guestUsername = guestUsername;
         this.checkIn = checkIn;
         this.checkOut = checkOut;
@@ -39,12 +49,18 @@ public class Reservation {
         this.guestUsername = guestUsername;
     }
 
-    public int getRoomNumber() {
-        return roomNumber;
+    public List<Integer> getRoomNumber() {
+        return roomNumbers;
     }
 
-    public void setRoomNumber(int roomNumber) {
-        this.roomNumber = roomNumber;
+    public void setRoomNumbers(int roomNumber) {
+        this.roomNumbers.clear();
+        this.roomNumbers.add(roomNumber);
+    }
+
+    public void setRoomNumbers(List<Integer> roomNumbers) {
+        this.roomNumbers.clear();
+        this.roomNumbers.addAll(roomNumbers);
     }
 
     public int getDays() {
@@ -61,5 +77,12 @@ public class Reservation {
 
     private int getDaysBetweenDates(Date checkIn, Date checkOut) {
         return Math.abs((int) ((checkIn.getTime() - checkOut.getTime()) / (1000 * 60 * 60 * 24)));
+    }
+
+    @Override
+    public String toCSV() {
+        StringBuilder rn = new StringBuilder();
+
+        return String.format("%s,%s,%s,%s", guestUsername, checkIn, checkOut, );
     }
 }

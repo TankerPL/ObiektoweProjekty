@@ -1,4 +1,4 @@
-public class Room {
+public class Room implements CSVInterface {
     private int number;
     private int beds;
     private float price;
@@ -51,28 +51,9 @@ public class Room {
     public void setPrice(float price) {
         this.price = price;
     }
-}
 
-/*class OneBed extends Room {
-    public OneBed(int number, float price) {
-        super(number, 1, price);
+    @Override
+    public String toCSV() {
+        return String.format("%s,%s,%s,%s", number, beds, price, discount);
     }
 }
-
-class TwoBeds extends Room {
-    public TwoBeds(int number, float price) {
-        super(number, 2, price);
-    }
-}
-
-class ThreeBeds extends Room {
-    public ThreeBeds(int number, float price) {
-        super(number, 3, price);
-    }
-}
-
-class FourBeds extends Room {
-    public FourBeds(int number, float price) {
-        super(number, 4, price);
-    }
-}*/
