@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Reservation implements CSVInterface {
     private Date checkIn = null;
@@ -49,7 +50,7 @@ public class Reservation implements CSVInterface {
         this.guestUsername = guestUsername;
     }
 
-    public List<Integer> getRoomNumber() {
+    public List<Integer> getRoomNumbers() {
         return roomNumbers;
     }
 
@@ -81,8 +82,7 @@ public class Reservation implements CSVInterface {
 
     @Override
     public String toCSV() {
-        StringBuilder rn = new StringBuilder();
-
-        return String.format("%s,%s,%s,%s", guestUsername, checkIn, checkOut, );
+        return String.format("%s,%s,%s,%s", guestUsername, checkIn, checkOut,
+                roomNumbers.stream().map(Object::toString).collect(Collectors.joining(",")));
     }
 }

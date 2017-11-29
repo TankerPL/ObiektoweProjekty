@@ -40,6 +40,10 @@ public class Hotel {
         return reservationsPerGuest.get(username);
     }
 
+    public Room getRoom(int roomNumber) {
+        return rooms.get(roomNumber);
+    }
+
     public Map<Integer, ArrayList<Integer>> getFreeRooms(Date checkIn, Date checkOut) {
         Map<Integer, ArrayList<Integer>> freeRooms = new HashMap<>();
         for (int roomNumber : rooms.keySet()) {
@@ -65,8 +69,10 @@ public class Hotel {
 
     public void cancelReservation(Reservation reservation) {
         reservations.remove(reservation);
-        reservationsPerRoom.remove(reservation.getRoomNumber());
         reservationsPerGuest.remove(reservation.getGuestUsername());
+        for (Integer room : reservation.getRoomNumbers()) {
+            reservationsPerRoom.get(room).remove(reservation);
+        }
     }
 
     public void updateGuestCSV() {
@@ -93,16 +99,19 @@ public class Hotel {
 
 
     private void setDiscountForAll(float discount) {
-        setDiscountForRoom(discount, (Integer[]) rooms.keySet().toArray());
+        setDiscountForRoom(discount, new ArrayList<>() {{
+            addAll(rooms.keySet());
+        }});
     }
 
     private void setDiscountForRoom(float discount, int roomId) {
         discounts.put(roomId, discount);
+        rooms.get(roomId).setDiscount(discount);
     }
 
-    private void setDiscountForRoom(float discount, Integer[] roomIds) {
+    private void setDiscountForRoom(float discount, List<Integer> roomIds) {
         for (Integer roomId : roomIds) {
-            discounts.put(roomId, discount);
+            setDiscountForRoom(discount, roomId);
         }
     }
 
@@ -129,7 +138,11 @@ public class Hotel {
         List<Object[]> file = loadCSV("csv/guests.csv");
         for (Object[] line : file) {
             guests.put(line[0].toString(), new Guest(
-                            line[0].toString(), line[1].toString(), line[2].toString(), line[3].toString(), (float) line[4]
+                            line[0].toString(),
+                            line[1].toString(),
+                            line[2].toString(),
+                            line[3].toString(),
+                            Float.valueOf(line[4].toString())
                     )
             );
         }

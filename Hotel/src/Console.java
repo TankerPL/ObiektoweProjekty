@@ -1,10 +1,9 @@
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map;
-import java.util.Scanner;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 
 public class Console {
@@ -106,6 +105,10 @@ public class Console {
             out.print("Prosze podac nazwe uzytkownika: ");
             username = in.next();
             if (username.isEmpty()) continue;
+            if (username.equals("0")) {
+                state = states.MAINMENU;
+                return;
+            }
             guest = hotel.getGuest(username);
             if (guest == null) {
                 out.println("Nie znaleziono uzytkownika " + username);
@@ -178,15 +181,20 @@ public class Console {
     }
 
     private void registerRooms() {
-        SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-DD");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         Date checkIn;
         Date checkOut;
         String choice;
+        Date now = new Date();
 
         while (true) {
             out.println("Podaj datę zameldowania (YYYY-MM-DD): ");
             try {
                 checkIn = df.parse(in.next());
+                if (checkIn.compareTo(now) < 0) {
+                    out.println("Data zameldowania nie moze byc przed " + now);
+                    continue;
+                }
                 break;
             } catch (ParseException ignored) {
                 out.println("Prosze podac date w formacie YYYY-MM-DD");
@@ -222,7 +230,7 @@ public class Console {
         }
 
         out.println("Prosze podac liczbe pokoi do zarezerwowania");
-        int[] requiredRooms = new int[]{0, 0, 0, 0};
+        HashMap<Integer, Integer> requiredRooms = new HashMap<>();
         int bed;
 
         for (Integer beds : freeRooms.keySet()) {
@@ -234,10 +242,30 @@ public class Console {
                     out.printf("Dostepnych jest %s %s-osobowych pokoi\n", freeRooms.get(beds).size(), beds);
                     continue;
                 }
-                requiredRooms[beds - 1] = bed;
+                requiredRooms.put(beds, bed);
                 break;
             } while (true);
         }
+        out.println();
+        Float price = 0.f;
+        for (Integer i : requiredRooms.keySet()) {
+            out.printf("%s-osobowy - %s\n", i + 1, requiredRooms.get(i));
+            for (int j = 0; j < requiredRooms.get(i); j++) {
+                price += hotel.getRoom(freeRooms.get(i).get(j)).getPriceWithDiscount();
+            }
+            price *= 1 - guest.getDiscount();
+        }
+        out.printf("Cena: %s PLN\n", price);
+        String confirm;
+        do {
+            out.println("Czy potwierdzasz rezerwacje? [y/n]: ");
+            confirm = in.next();
+            if (confirm.equals("y")) {
+                hotel.makeReservation(guest.getUsername(), requiredRooms, checkIn, checkOut);
+                return;
+            }
+        } while (!confirm.equals("n"));
+
     }
 
     private void cancelRooms() {
@@ -249,7 +277,7 @@ public class Console {
 
         for (int i = 1; i <= reservations.size(); i++) {
             r = reservations.get(i - 1);
-            out.printf("%s - %s %s %s", i, r.getCheckIn(), r.getCheckOut(), r.getRoomNumber());
+            out.printf("%s - %s %s %s", i, r.getCheckIn(), r.getCheckOut(), r.getRoomNumbers());
         }
         out.println("Prosze wybrac rezerwacje do anulowania: ");
         choice = in.nextInt();
@@ -262,7 +290,7 @@ public class Console {
             out.print("Prosze potwierdzic anulowanie rezerwacji " + choice + " [y/n]: ");
             confirm = in.next();
             if (confirm.equals("y")) {
-                hotel.removeReservation(r);
+                hotel.cancelReservation(r);
                 state = states.MAINMENU;
                 return;
             }
