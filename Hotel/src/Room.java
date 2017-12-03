@@ -10,28 +10,36 @@ public class Room implements CSVInterface {
         this.price = price;
     }
 
-    public int getNumber() {
+    Room(int number, int beds, float price, float discount) {
+        this(number, beds, price);
+        setDiscount(discount);
+    }
+
+    public int getRoomNumber() {
         return this.number;
     }
 
-    public void setNumber(int number) {
+    public Room setRoomNumber(int number) {
         this.number = number;
+        return this;
     }
 
     public int getBeds() {
         return this.beds;
     }
 
-    public void setBeds(int beds) {
+    public Room setBeds(int beds) {
         this.beds = beds;
+        return this;
     }
 
     public float getDiscount() {
         return discount;
     }
 
-    public void setDiscount(float discount) {
+    public Room setDiscount(float discount) {
         this.discount = discount > 0 ? discount : 0;
+        return this;
     }
 
     public float getPrice() {
@@ -41,15 +49,15 @@ public class Room implements CSVInterface {
     public float getPriceWithDiscount() {
         if (discount == 0) {
             return this.price;
-        }
-        if (discount <= 1) {
+        } else if (discount <= 1) {
             return this.price - this.price * discount;
         }
         return this.price - discount;
     }
 
-    public void setPrice(float price) {
+    public Room setPrice(float price) {
         this.price = price;
+        return this;
     }
 
     @Override

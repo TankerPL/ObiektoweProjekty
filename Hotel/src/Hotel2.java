@@ -1,8 +1,8 @@
 import java.io.*;
 import java.util.*;
 
-public class Hotel {
-    private static Hotel instance = new Hotel();
+public class Hotel2 {
+    private static Hotel2 instance = new Hotel2();
     private HashMap<String, Guest> guests = new HashMap<>();
     private HashMap<Integer, ArrayList<Integer>> beds = new HashMap<>();
     private HashMap<Integer, Room> rooms = new HashMap<>();
@@ -10,13 +10,13 @@ public class Hotel {
     private HashMap<Integer, ArrayList<Reservation>> reservationsPerRoom = new HashMap<>();
     private HashMap<String, ArrayList<Reservation>> reservationsPerGuest = new HashMap<>();
 
-    private Hotel() {
+    private Hotel2() {
         loadRooms();
         loadGuests();
         loadReservations();
     }
 
-    public static Hotel getInstance() {
+    public static Hotel2 getInstance() {
         return instance;
     }
 
@@ -47,8 +47,7 @@ public class Hotel {
         Map<Integer, ArrayList<Integer>> freeRooms = new HashMap<>();
         for (int roomNumber : rooms.keySet()) {
             if (isRoomFree(roomNumber, checkIn, checkOut)) {
-                freeRooms.putIfAbsent(roomNumber, new ArrayList<>());
-                freeRooms.get(roomNumber).add(roomNumber);
+                freeRooms.putIfAbsent(roomNumber, new ArrayList<>()).add(roomNumber);
             }
         }
         return freeRooms;
@@ -60,11 +59,10 @@ public class Hotel {
         }
         Map<Integer, ArrayList<Integer>> freeRooms = getFreeRooms(checkIn, checkOut);
         for (int beds : requiredRooms.keySet()) {
-            if (freeRooms.get(beds).size() < requiredRooms.get(beds)) {
+            if (requiredRooms.get(beds) == 0) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -74,14 +72,6 @@ public class Hotel {
         for (Integer room : reservation.getRoomNumbers()) {
             reservationsPerRoom.get(room).remove(reservation);
         }
-    }
-
-    public void addRoom(int number, int beds, float price, float discount) {
-        Room room = new Room(number, beds, price, discount);
-        this.rooms.put(number, room);
-        this.beds.putIfAbsent(beds, new ArrayList<>());
-        this.beds.get(beds).add(number);
-        updateRoomsCSV();
     }
 
     public void updateGuestCSV() {
@@ -102,7 +92,19 @@ public class Hotel {
         saveRooms();
     }
 
+    /**
+     * HELPERS
+     */
+
+
+    private void setDiscountForAll(float discount) {
+        setDiscountForRoom(discount, new ArrayList<>() {{
+            addAll(rooms.keySet());
+        }});
+    }
+
     private void setDiscountForRoom(float discount, int roomId) {
+        //discounts.put(roomId, discount);
         rooms.get(roomId).setDiscount(discount);
     }
 
@@ -113,9 +115,7 @@ public class Hotel {
     }
 
     private boolean isRoomFree(int roomNumber, Date checkIn, Date checkOut) {
-        ArrayList<Reservation> reservations = reservationsPerRoom.get(roomNumber);
-        if (reservations == null || reservations.isEmpty()) return true;
-        for (Reservation r : reservations) {
+        for (Reservation r : reservationsPerRoom.get(roomNumber)) {
             if (r.getCheckIn().before(checkOut) || r.getCheckOut().after(checkIn)) {
                 return false;
             }
@@ -133,25 +133,19 @@ public class Hotel {
         return freeRooms;
     }
 
-    private void setDiscountForAll(float discount) {
-        setDiscountForRoom(discount, new ArrayList<>() {{
-            addAll(rooms.keySet());
-        }});
-    }
-
     /**
-     * HELPERS
+     * CSV HELPERS
      */
 
     private void loadGuests() {
-        List<String[]> file = loadCSV("csv/guests.csv");
-        for (String[] line : file) {
-            guests.put(line[0], new Guest(
-                            line[0],
-                            line[1],
-                            line[2],
-                            line[3],
-                            Float.valueOf(line[4])
+        List<Object[]> file = loadCSV("csv/guests.csv");
+        for (Object[] line : file) {
+            guests.put(line[0].toString(), new Guest(
+                            line[0].toString(),
+                            line[1].toString(),
+                            line[2].toString(),
+                            line[3].toString(),
+                            Float.valueOf(line[4].toString())
                     )
             );
         }
@@ -163,11 +157,15 @@ public class Hotel {
     }
 
     private void loadRooms() {
-        List<String[]> file = loadCSV("csv/rooms.csv");
-        for (String[] line : file) {
-            rooms.put(Integer.valueOf(line[0]), new Room(Integer.valueOf(line[0]), Integer.valueOf(line[1]), Float.valueOf(line[2])));
-            beds.putIfAbsent(Integer.valueOf(line[1]), new ArrayList<>());
-            beds.get(Integer.valueOf(line[1])).add(Integer.valueOf(line[0]));
+        List<Object[]> file = loadCSV("csv/rooms.csv");
+        for (Object[] line : file) {
+            beds.putIfAbsent((int) line[1], new ArrayList<>()).add((int) line[0]);
+            rooms.put((int) line[0], new Room(
+                    (int) line[0],
+                    (int) line[1],
+                    (float) line[2],
+                    (float) line[3]
+            ));
         }
     }
 
@@ -177,20 +175,15 @@ public class Hotel {
     }
 
     private void loadReservations() {
-        List<String[]> file = loadCSV("csv/reservations.csv");
-        for (String[] line : file) {
-            if (new Date(Long.valueOf(line[3])).after(new Date())) {
-                continue;
-            }
-            int roomNumber = Integer.valueOf(line[0]);
-            String username = line[1];
+        List<Object[]> file = loadCSV("csv/reservations.csv");
+        for (Object[] line : file) {
+            int roomNumber = (int) line[0];
+            String username = line[1].toString();
             Reservation reservation = new Reservation(
-                    roomNumber, username, new Date(Long.valueOf(line[2])), new Date(Long.valueOf(line[3])));
+                    roomNumber, username, new Date((long) line[2]), new Date((long) line[3]));
             reservations.add(reservation);
-            reservationsPerRoom.putIfAbsent(roomNumber, new ArrayList<>());
-            reservationsPerRoom.get(roomNumber).add(reservation);
-            reservationsPerGuest.putIfAbsent(username, new ArrayList<>());
-            reservationsPerGuest.get(username).add(reservation);
+            reservationsPerRoom.putIfAbsent(roomNumber, new ArrayList<>()).add(reservation);
+            reservationsPerGuest.putIfAbsent(username, new ArrayList<>()).add(reservation);
         }
     }
 
@@ -215,14 +208,14 @@ public class Hotel {
         }
     }
 
-    private List<String[]> loadCSV(String file) {
+    private List<Object[]> loadCSV(String file) {
         Scanner scanner = null;
-        ArrayList<String[]> data = new ArrayList<>();
+        ArrayList<Object[]> rooms = new ArrayList<>();
 
         try {
             scanner = new Scanner(new FileReader(file));
             while (scanner.hasNext()) {
-                data.add(scanner.next().split(","));
+                rooms.add(scanner.next().split(","));
             }
 
         } catch (IOException e) {
@@ -232,7 +225,7 @@ public class Hotel {
                 scanner.close();
             }
         }
-        return data;
+        return rooms;
     }
 
     /**

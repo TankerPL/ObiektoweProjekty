@@ -30,12 +30,14 @@ public class Reservation implements CSVInterface {
         return checkIn;
     }
 
-    public void setCheckIn(Date checkIn) {
+    public Reservation setCheckIn(Date checkIn) {
         this.checkIn = checkIn;
+        return this;
     }
 
-    public void setCheckOut(Date checkOut) {
+    public Reservation setCheckOut(Date checkOut) {
         this.checkOut = checkOut;
+        return this;
     }
 
     public Date getCheckOut() {
@@ -46,34 +48,57 @@ public class Reservation implements CSVInterface {
         return guestUsername;
     }
 
-    public void setGuest(String guestUsername) {
+    public Reservation setGuest(String guestUsername) {
         this.guestUsername = guestUsername;
+        return this;
     }
 
     public List<Integer> getRoomNumbers() {
         return roomNumbers;
     }
 
-    public void setRoomNumbers(int roomNumber) {
-        this.roomNumbers.clear();
+    public Reservation addRoomNumber(int roomNumber) {
         this.roomNumbers.add(roomNumber);
+        return this;
     }
 
-    public void setRoomNumbers(List<Integer> roomNumbers) {
-        this.roomNumbers.clear();
+    public Reservation addRoomNumber(List<Integer> roomNumbers) {
         this.roomNumbers.addAll(roomNumbers);
+        return this;
+    }
+
+    public Reservation removeRoomNumber(int roomNumber) {
+        this.roomNumbers.remove(roomNumber);
+        return this;
+    }
+
+    public Reservation removeRoomNumber(List<Integer> roomNumbers) {
+        this.roomNumbers.removeAll(roomNumbers);
+        return this;
+    }
+
+    public Reservation setRoomNumbers(int roomNumber) {
+        this.roomNumbers.clear();
+        return addRoomNumber(roomNumber);
+    }
+
+    public Reservation setRoomNumbers(List<Integer> roomNumbers) {
+        this.roomNumbers.clear();
+        return addRoomNumber(roomNumbers);
     }
 
     public int getDays() {
         return days;
     }
 
-    private void setDays(int days) {
+    private Reservation setDays(int days) {
         this.days = days;
+        return this;
     }
 
-    private void setDays(Date checkIn, Date checkOut) {
+    private Reservation setDays(Date checkIn, Date checkOut) {
         this.days = getDaysBetweenDates(checkIn, checkOut);
+        return this;
     }
 
     private int getDaysBetweenDates(Date checkIn, Date checkOut) {
@@ -82,7 +107,7 @@ public class Reservation implements CSVInterface {
 
     @Override
     public String toCSV() {
-        return String.format("%s,%s,%s,%s", guestUsername, checkIn, checkOut,
+        return String.format("%s,%s,%s,%s", guestUsername, checkIn.getTime(), checkOut.getTime(),
                 roomNumbers.stream().map(Object::toString).collect(Collectors.joining(",")));
     }
 }
