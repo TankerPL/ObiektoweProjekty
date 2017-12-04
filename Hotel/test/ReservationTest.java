@@ -4,8 +4,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Date;
 
-import static org.junit.Assert.*;
-
 /**
  * Created by constie on 03.12.2017.
  */

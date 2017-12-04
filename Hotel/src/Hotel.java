@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Hotel {
     private static Hotel instance = new Hotel();
@@ -24,7 +25,9 @@ public class Hotel {
         if (guests.containsKey(userName)) {
             return null;
         }
-        return guests.put(userName, new Guest(userName, firstName, lastName, password, 0.f));
+        Guest g = guests.put(userName, new Guest(userName, firstName, lastName, password, 0.f));
+        updateGuestCSV();
+        return g;
     }
 
     public boolean guestExists(String username) {
@@ -47,8 +50,9 @@ public class Hotel {
         Map<Integer, ArrayList<Integer>> freeRooms = new HashMap<>();
         for (int roomNumber : rooms.keySet()) {
             if (isRoomFree(roomNumber, checkIn, checkOut)) {
-                freeRooms.putIfAbsent(roomNumber, new ArrayList<>());
-                freeRooms.get(roomNumber).add(roomNumber);
+                int beds = rooms.get(roomNumber).getBeds();
+                freeRooms.putIfAbsent(beds, new ArrayList<>());
+                freeRooms.get(beds).add(roomNumber);
             }
         }
         return freeRooms;
@@ -59,12 +63,22 @@ public class Hotel {
             return false;
         }
         Map<Integer, ArrayList<Integer>> freeRooms = getFreeRooms(checkIn, checkOut);
+        ArrayList<Integer> bookedRooms = new ArrayList<>();
         for (int beds : requiredRooms.keySet()) {
             if (freeRooms.get(beds).size() < requiredRooms.get(beds)) {
                 return false;
             }
+            bookedRooms.addAll(freeRooms.get(beds).subList(0, requiredRooms.get(beds)));
         }
-
+        Reservation r = new Reservation(bookedRooms, username, checkIn, checkOut);
+        reservations.add(r);
+        reservationsPerGuest.putIfAbsent(username, new ArrayList<>());
+        reservationsPerGuest.get(username).add(r);
+        for (Integer i : bookedRooms) {
+            reservationsPerRoom.putIfAbsent(i, new ArrayList<>());
+            reservationsPerRoom.get(i).add(r);
+        }
+        updateReservationCSV();
         return true;
     }
 
@@ -74,6 +88,11 @@ public class Hotel {
         for (Integer room : reservation.getRoomNumbers()) {
             reservationsPerRoom.get(room).remove(reservation);
         }
+        updateReservationCSV();
+    }
+
+    public boolean hasRoomReservations(int roomNumber) {
+        return reservationsPerRoom.get(roomNumber) != null && !reservationsPerRoom.get(roomNumber).isEmpty();
     }
 
     public void addRoom(int number, int beds, float price, float discount) {
@@ -81,6 +100,24 @@ public class Hotel {
         this.rooms.put(number, room);
         this.beds.putIfAbsent(beds, new ArrayList<>());
         this.beds.get(beds).add(number);
+        updateRoomsCSV();
+    }
+
+    public boolean removeRoom(int number) {
+        if (reservationsPerRoom.get(number) == null || reservationsPerRoom.get(number).isEmpty()) {
+            rooms.remove(number);
+            reservationsPerRoom.remove(number);
+            updateRoomsCSV();
+            return true;
+        }
+        return false;
+    }
+
+    public void editRoom(int oldNumber, int newNumber, int beds, float price, float discount) {
+        Room room = getRoom(oldNumber);
+        room.setRoomNumber(newNumber).setBeds(beds).setPrice(price).setDiscount(discount);
+        rooms.put(newNumber, room);
+        rooms.remove(oldNumber);
         updateRoomsCSV();
     }
 
@@ -104,12 +141,14 @@ public class Hotel {
 
     private void setDiscountForRoom(float discount, int roomId) {
         rooms.get(roomId).setDiscount(discount);
+        updateRoomsCSV();
     }
 
     private void setDiscountForRoom(float discount, List<Integer> roomIds) {
         for (Integer roomId : roomIds) {
             setDiscountForRoom(discount, roomId);
         }
+        updateRoomsCSV();
     }
 
     private boolean isRoomFree(int roomNumber, Date checkIn, Date checkOut) {
@@ -137,6 +176,7 @@ public class Hotel {
         setDiscountForRoom(discount, new ArrayList<>() {{
             addAll(rooms.keySet());
         }});
+        updateRoomsCSV();
     }
 
     /**
@@ -182,15 +222,19 @@ public class Hotel {
             if (new Date(Long.valueOf(line[3])).after(new Date())) {
                 continue;
             }
-            int roomNumber = Integer.valueOf(line[0]);
-            String username = line[1];
-            Reservation reservation = new Reservation(
-                    roomNumber, username, new Date(Long.valueOf(line[2])), new Date(Long.valueOf(line[3])));
+            List<Integer> rooms =
+                    Arrays.stream(Arrays.copyOfRange(line, 3, line.length))
+                            .map(Integer::valueOf)
+                            .collect(Collectors.toCollection(ArrayList::new));
+            String username = line[0];
+            Reservation reservation = new Reservation(rooms, username, new Date(Long.valueOf(line[2])), new Date(Long.valueOf(line[3])));
             reservations.add(reservation);
-            reservationsPerRoom.putIfAbsent(roomNumber, new ArrayList<>());
-            reservationsPerRoom.get(roomNumber).add(reservation);
             reservationsPerGuest.putIfAbsent(username, new ArrayList<>());
             reservationsPerGuest.get(username).add(reservation);
+            for (Integer roomNumber : rooms) {
+                reservationsPerRoom.putIfAbsent(roomNumber, new ArrayList<>());
+                reservationsPerRoom.get(roomNumber).add(reservation);
+            }
         }
     }
 
@@ -208,6 +252,7 @@ public class Hotel {
             }
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
             e.printStackTrace();
+            System.exit(1);
         } finally {
             if (writer != null) {
                 writer.close();
@@ -227,6 +272,7 @@ public class Hotel {
 
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(1);
         } finally {
             if (scanner != null) {
                 scanner.close();

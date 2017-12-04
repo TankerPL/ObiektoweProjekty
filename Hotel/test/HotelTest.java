@@ -6,13 +6,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Created by constie on 03.12.2017.
  */
 public class HotelTest {
-    private Hotel hotel = new Hotel();
+    private Hotel hotel = Hotel.getInstance();
     private HashMap<String, Guest> guests = new HashMap<>();
     private Guest guest = new Guest("a", "a", "a", "a", 0);
     private HashMap<Integer, Room> rooms = new HashMap<>();
@@ -20,7 +20,6 @@ public class HotelTest {
     private HashMap<Integer, ArrayList<Reservation>> reservationsPerRoom = new HashMap<>();
     private HashMap<String, ArrayList<Reservation>> reservationsPerGuest = new HashMap<>();
     Reservation reservation = new Reservation(1, "a", new Date(1512259261000l), new Date(1512518463000l));
-
 
 
     @Test

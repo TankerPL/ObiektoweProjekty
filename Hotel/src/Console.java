@@ -110,8 +110,15 @@ public class Console {
             }
 
             if (choice.equals("admin")) {
-                isAdmin = true;
-                continue;
+                if (guest != null) {
+                    isAdmin = true;
+                }
+                return;
+            }
+
+            if (choice.equals("normal")) {
+                isAdmin = false;
+                return;
             }
 
             switch (choice) {
@@ -199,8 +206,14 @@ public class Console {
             do {
                 out.print("Czy chcesz sprawdzic inny termin? [y/n]");
                 choice = in.next();
-                if (choice.equals("y")) state = states.REGISTERRESERVATION;
-                if (choice.equals("n")) state = states.MAINMENU;
+                if (choice.equals("y")) {
+                    state = states.REGISTERRESERVATION;
+                    return;
+                }
+                if (choice.equals("n")) {
+                    state = states.MAINMENU;
+                    return;
+                }
             } while (!choice.equals("y") && !choice.equals("n"));
         }
 
@@ -213,12 +226,11 @@ public class Console {
         HashMap<Integer, Integer> requiredRooms = new HashMap<>();
         int bed;
 
-        CHOICE:
         for (Integer beds : freeRooms.keySet()) {
             out.printf("%s-osobowe (max %s): ", beds, freeRooms.get(beds).size());
             do {
                 bed = in.nextInt();
-                if (bed == 0) continue;
+                if (bed == 0) break;
                 if (bed > freeRooms.get(beds).size()) {
                     out.println("Brak wystarczającej liczby pokoi");
                     out.printf("Dostepnych jest %s %s-osobowych pokoi\n", freeRooms.get(beds).size(), beds);
@@ -232,7 +244,7 @@ public class Console {
         out.println();
         float price = 0.f;
         for (Integer i : requiredRooms.keySet()) {
-            out.printf("%s-osobowy - %s\n", i + 1, requiredRooms.get(i));
+            out.printf("%s-osobowy - %s\n", i, requiredRooms.get(i));
             for (int j = 0; j < requiredRooms.get(i); j++) {
                 price += hotel.getRoom(freeRooms.get(i).get(j)).getPriceWithDiscount();
             }
@@ -244,10 +256,12 @@ public class Console {
             out.println("Czy potwierdzasz rezerwacje? [y/n]: ");
             confirm = in.next();
             if (confirm.equals("y")) {
+                out.println("State: " + state);
                 hotel.makeReservation(guest.getUsername(), requiredRooms, checkIn, checkOut);
                 state = states.MAINMENU;
                 return;
             }
+            out.println("Confirm: " + confirm);
         } while (!confirm.equals("n"));
         state = states.MAINMENU;
     }
@@ -257,7 +271,18 @@ public class Console {
         Reservation r;
         Integer choice;
         String confirm;
-        ArrayList<Reservation> reservations = hotel.getReservationPerGuest(guest.getUsername());
+        String username = null;
+
+        if (isAdmin) {
+            while (username == null || username.isEmpty()) {
+                out.print("Podaj nazwe uzytkownika: ");
+                username = in.next();
+            }
+        } else {
+            username = guest.getUsername();
+        }
+
+        ArrayList<Reservation> reservations = hotel.getReservationPerGuest(username);
         if (reservations == null || reservations.isEmpty()) {
             out.println("Brak dostepnych rezerwacji do anulowania");
             state = states.MAINMENU;
@@ -265,11 +290,11 @@ public class Console {
         }
         for (int i = 1; i <= reservations.size(); i++) {
             r = reservations.get(i - 1);
-            out.printf("%s - %s %s %s", i, r.getCheckIn(), r.getCheckOut(), r.getRoomNumbers());
+            out.printf("%s - %s %s %s\n", i, r.getCheckIn(), r.getCheckOut(), r.getRoomNumbers());
         }
         out.println("Prosze wybrac rezerwacje do anulowania: ");
         choice = in.nextInt();
-        while (choice < 1 || choice >= reservations.size()) {
+        while (choice < 1 || choice > reservations.size()) {
             out.println("Prosze podac poprawny numer rezerwacji");
             choice = in.nextInt();
         }
@@ -329,6 +354,7 @@ public class Console {
             username = in.next();
             if (username.isEmpty()) continue;
             if (username.equals("0")) {
+                isAdmin = false;
                 state = states.MAINMENU;
                 return;
             }
@@ -458,9 +484,107 @@ public class Console {
     }
 
     private void removeRooms() {
+        int number;
+        String choice;
+
+        while (true) {
+            out.print("Prosze podac numer pokoju do usuniecia: ");
+            number = in.nextInt();
+            if (hotel.getRoom(number) == null) {
+                out.println("Pokoj nie istnieje. Wprowadz inny numer");
+                continue;
+            }
+            break;
+        }
+
+        while (true) {
+            out.printf("Czy potwierdzasz pokoju %d? [y/n]: ", number);
+            choice = in.next();
+            if (choice.equals("y")) {
+                if (!hotel.removeRoom(number)) {
+                    out.println("Nie mozna usunac pokoju z powodu istniejacych rezerwacji");
+                } else {
+                    out.println("Usunieto pokoj");
+                }
+                state = states.MAINMENU;
+                return;
+            } else if (choice.equals("n")) {
+                state = states.MAINMENU;
+                return;
+            }
+        }
     }
 
     private void editRooms() {
+        int oldNumber, newNumber, beds;
+        float price;
+        String choice;
+
+        while (true) {
+            out.print("Prosze podac numer pokoju do edytowania: ");
+            oldNumber = in.nextInt();
+            if (hotel.getRoom(oldNumber) == null) {
+                out.println("Pokoj nie istnieje. Wprowadz inny numer");
+                continue;
+            }
+            break;
+        }
+
+        if (hotel.hasRoomReservations(oldNumber)) {
+            out.println("Nie mozna edytowac pokoju z powodu istniejacych rezerwacji");
+            state = states.MAINMENU;
+            return;
+        }
+
+
+        while (true) {
+            out.print("Prosze podac nowy numer pokoju: ");
+            newNumber = in.nextInt();
+            if (hotel.getRoom(newNumber) != null) {
+                out.println("Pokoj juz istnieje. Wprowadz inny numer");
+                continue;
+            }
+            break;
+        }
+        while (true) {
+            out.print("Prosze podac nowa ilosc lozek w pokoju: ");
+            beds = in.nextInt();
+            if (1 > beds || beds > 4) {
+                out.println("Pokoj moze miec tylko od 1 do 4 lozek");
+                continue;
+            }
+            break;
+        }
+        while (true) {
+            out.print("Prosze podac cene za noc w nowym pokoju: ");
+            price = in.nextFloat();
+            if (price < 0) {
+                out.println("Cena za noc nie moze byc mniejsza od 0");
+                continue;
+            }
+            break;
+        }
+
+        out.println("Numer pokoju: " + newNumber);
+        out.println("Ilosc lozek: " + beds);
+        out.println("Cena za noc: " + price);
+        while (true) {
+            out.print("Czy nowe dane pokoju? [y/n]: ");
+            choice = in.next();
+            if (choice.equals("y")) {
+                hotel.editRoom(oldNumber, newNumber, beds, price, 0f);
+                out.println("Zapisano pokoj");
+                state = states.MAINMENU;
+                return;
+            } else if (choice.equals("n")) {
+                state = states.MAINMENU;
+                return;
+            }
+        }
+    }
+
+    private void backToMainMenu() {
+
     }
 
     private String getHeader() {
