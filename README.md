@@ -1,4 +1,4 @@
-#Hotel
+# Hotel
 
 Klasa zawierająca metodę _main_ to _Hotel.java_
 
