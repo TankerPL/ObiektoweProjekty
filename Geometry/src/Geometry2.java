@@ -293,7 +293,7 @@ public class Geometry2 {
                     }
                     actualY--;
                     if (actualX == points[0].x && actualY == points[0].y) {
-                        ellipses.add(new Ellipse(points));
+                        ellipses.add(new Ellipse(points.clone()));
                         direction = 1;
                         actualX = points[3].x;
                         actualY = points[3].y;
