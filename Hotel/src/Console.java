@@ -142,10 +142,10 @@ public class Console {
                     if (guest != null) return;
                     state = states.REGISTERGUEST;
                     return;
-                case "6":
+                /*case "6":
                     if (!isAdmin) return;
                     state = states.EDITGUEST;
-                    return;
+                    return;*/
                 case "7":
                     if (!isAdmin) return;
                     state = states.ADDROOMS;
@@ -581,10 +581,6 @@ public class Console {
                 return;
             }
         }
-    }
-
-    private void backToMainMenu() {
-
     }
 
     private String getHeader() {
