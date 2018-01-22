@@ -8,6 +8,9 @@ Program podaje również ułożenie kształtów względem siebie dotyczące styc
 
 By dokonać przesunięcia jdnej z figur należy podać numer tej figury w konsoli i wektor przemieszczenia. Jeżeli przemieszczenie mieści się w obrazie zostanie ono wykonane. Następnie ułożenie względem siebie kształtów zostaje przekalkulowane na nowo.
 
+Metoda _main_ znajduje się w klasie _Geometry2_. 
+Podaje znalezione kształty razem z punktami charakterystycznymi, listuje ułożenie kształtów względem siebie i daje możliwość wykonania przesunięcie wybranego kształtu.   
+
 
 # Hotel
 
