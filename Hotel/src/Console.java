@@ -430,6 +430,52 @@ public class Console {
     }
 
     private void editGuest() {
+        String username;
+        String firstName;
+        String lastName;
+        String password;
+        String choice;
+
+        while(true){
+            out.println("Podaj 0, aby powrocic do menu");
+            do {
+                out.print("Prosze podac username uzytkownika: ");
+                username = in.next();
+                if (!hotel.guestExists(username)) {
+                    out.println("Nie ma w bazie uzytkownika o takiej nazwie.");
+                    continue;
+                }
+            } while(username.isEmpty());
+            do{
+                out.print("Prosze podac nowe imie dla uzytkownika: ");
+                firstName = in.next();
+            } while(firstName.isEmpty());
+            do{
+                out.print("Prosze podac nowe nazwisko uzytkownika: ");
+                lastName = in.next();
+            } while(lastName.isEmpty());
+            do{
+                out.print("Prosze podac nowe haslo: ");
+                password = in.next();
+            } while(password.isEmpty());
+
+            out.println("dla uzytkownika: " + username + " dane zostaly zmienione w nastepujacy sposob: ");
+            out.println("Imie: " + firstName);
+            out.println("Nazwisko: " + lastName);
+            out.println("Haslo: " + password);
+
+            do {
+                out.print("Czy dane sa poprawne? [y/n] ");
+                choice = in.next();
+                if (choice.equals("y")) {
+                    guest = hotel.updateGuest(username, firstName, lastName, password);
+                    state = states.MAINMENU;
+                    hotel.updateGuestCSV();
+                    return;
+                }
+            } while (!choice.equals("n"));
+
+        }
     }
 
     private void addRooms() {

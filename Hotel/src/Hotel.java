@@ -11,7 +11,7 @@ public class Hotel {
     private HashMap<Integer, ArrayList<Reservation>> reservationsPerRoom = new HashMap<>();
     private HashMap<String, ArrayList<Reservation>> reservationsPerGuest = new HashMap<>();
 
-    private Hotel() {
+    Hotel() {
         loadRooms();
         loadGuests();
         loadReservations();
@@ -26,6 +26,18 @@ public class Hotel {
             return null;
         }
         Guest g = guests.put(userName, new Guest(userName, firstName, lastName, password, 0.f));
+        updateGuestCSV();
+        return g;
+    }
+
+    public Guest updateGuest(String userName, String firstName, String lastName, String password){
+        if (!guests.containsKey(userName)) {
+            return null;
+        }
+        Guest g = guests.get(userName);
+        g.setName(firstName);
+        g.setLastName(lastName);
+        g.setPassword(password);
         updateGuestCSV();
         return g;
     }
@@ -173,7 +185,7 @@ public class Hotel {
     }
 
     private void setDiscountForAll(float discount) {
-        setDiscountForRoom(discount, new ArrayList<>() {{
+        setDiscountForRoom(discount, new ArrayList<Integer>() {{
             addAll(rooms.keySet());
         }});
         updateRoomsCSV();
@@ -272,7 +284,7 @@ public class Hotel {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(1);
+//            System.exit(1);
         } finally {
             if (scanner != null) {
                 scanner.close();
