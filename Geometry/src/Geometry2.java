@@ -517,7 +517,7 @@ public class Geometry2 {
 
     static void printShapes(ArrayList<Shape> shapes) {
         for (int i = 0; i < shapes.size(); i++) {
-            System.out.println(i + 1 + " - " + shapes.get(i).getClass() + " " + shapes.get(i).printCorners());
+            System.out.println(i + " - " + shapes.get(i).getClass() + " " + shapes.get(i).printCorners());
         }
         System.out.println();
         for (int i = 0; i < shapes.size(); i++) {
@@ -535,11 +535,46 @@ public class Geometry2 {
         int x = Math.abs(s.center.x - s2.center.x);
         int y = Math.abs(s.center.y - s2.center.y);
 
-        if (x < Math.abs((s.width - s2.width) / 2.) && x < Math.abs((s.height - s2.height) / 2.)) return "Zawiera sie";
-        if (x < Math.abs((s.width + s2.width) / 2.) || y < (s.height / 2. + s2.height) / 2.) return "Wspolna czesc";
-        if ((x + s.width / 2. == s2.width && y < ((s.height + s2.height) / 2.))
-                || (y + s.height / 2. == s2.height && x < ((s.width + s2.width) / 2.))) return "Styczne";
-        return "Rozlaczne";
+        /*System.out.println(s.printCorners());
+        System.out.println(s.width);
+        System.out.println(s.height);
+        System.out.println(s.center);
+        System.out.println(s2.printCorners());
+        System.out.println(s2.width);
+        System.out.println(s2.height);
+        System.out.println(s2.center);*/
+
+        if (s.getTopBound() < s2.getTopBound()
+                && s.getBottomBound() > s2.getBottomBound()
+                && s.getLeftBound() < s2.getLeftBound()
+                && s.getRightBound() > s2.getRightBound()) return "Zawiera";
+
+        if (s.getTopBound() > s2.getTopBound()
+                && s.getBottomBound() < s2.getBottomBound()
+                && s.getLeftBound() > s2.getLeftBound()
+                && s.getRightBound() < s2.getRightBound()) return "Zawiera sie";
+
+        if (s.getTopBound() > s2.getBottomBound()
+                || s.getBottomBound() < s2.getTopBound()
+                || s.getLeftBound() > s2.getRightBound()
+                || s.getRightBound() < s2.getLeftBound()) return "Rozlaczne";
+
+        if (s.getTopBound() == s2.getTopBound()
+                || s.getTopBound() == s2.getBottomBound()
+                || s.getBottomBound() == s2.getTopBound()
+                || s.getBottomBound() == s2.getBottomBound()
+                || s.getLeftBound() == s2.getRightBound()
+                || s.getLeftBound() == s2.getLeftBound()
+                || s.getRightBound() == s2.getLeftBound()
+                || s.getRightBound() == s2.getRightBound()) return "Styczne";
+
+        if ((s.getLeftBound() < s2.getLeftBound() && s2.getLeftBound() < s.getRightBound())
+                || (s.getLeftBound() < s2.getRightBound() && s2.getRightBound() < s.getRightBound())
+                || (s.getTopBound() < s2.getBottomBound() && s2.getBottomBound() < s.getBottomBound())
+                || (s.getTopBound() < s2.getTopBound() && s2.getTopBound() < s.getBottomBound()))
+            return "Wspolna czesc";
+
+        return "?";
     }
 
     static void moveShapes(ArrayList<Shape> shapes) {
@@ -555,7 +590,7 @@ public class Geometry2 {
             }
             System.out.println("Podaj wektor przemieszczenia? ");
             vector.setLocation(scanner.nextInt(), scanner.nextInt());
-            shapes.get(shape).center.setLocation(vector);
+            shapes.get(shape).moveShape(vector);
             do {
                 System.out.println("Chcesz potworzyc? [y/n] ");
                 answer = scanner.next();
@@ -574,8 +609,31 @@ abstract class Shape {
     Point center;
     Point[] corners;
 
+    void moveShape(Point vector) {
+        center.setLocation(vector);
+        for (int i = 0; i < corners.length; i++) {
+            corners[i].setLocation(vector);
+        }
+    }
+
     String printCorners() {
         return Arrays.toString(corners);
+    }
+
+    int getTopBound() {
+        return corners[0].y;
+    }
+
+    int getBottomBound() {
+        return corners[corners.length / 2].y;
+    }
+
+    int getLeftBound() {
+        return corners[corners.length - 1].x;
+    }
+
+    int getRightBound() {
+        return corners[corners.length / 4].x;
     }
 }
 
