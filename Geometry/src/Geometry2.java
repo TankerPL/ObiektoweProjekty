@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class Geometry2 {
     public static void main(String[] args) {
-        int[][] array = load_image("rectangles.bmp");
+        int[][] array = load_image("rectangle.bmp");
         ArrayList<Shape> shapes = findShapes(array);
         printShapes(shapes);
         moveShapes(shapes);
@@ -55,10 +55,9 @@ public class Geometry2 {
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 if (array[i][j] == 1 && array[i][j + 1] == 1 && array[i + 1][j] == 1) {
-                    if ((i == 21 && j == 42) || (i == 49 && j == 64)) System.out.println("FOUND");
                     //System.out.println("Point: " + j + " " + i);
                     shapes.addAll(findRectangle(array, i, j));
-                    //shapes.addAll(findEllipses(array, i, j));
+                    shapes.addAll(findEllipses(array, i, j));
                 }
             }
         }
@@ -80,18 +79,19 @@ public class Geometry2 {
 
         boolean fallback = false;
         boolean wasHorizontal = false;
-        boolean wasVertical = false;
 
         ArrayList<Integer> steps = new ArrayList<>();
         ArrayList<Shape> ellipses = new ArrayList<>();
 
         while (true) {
+            //System.out.println(actualX + " " + actualY);
             switch (direction) {
                 case 0: {
                     if (!fallback && array[actualY + 1][actualX] == 1 && actualX - points[0].x > 1) {
                         points[1].setLocation(actualX, actualY);
                         direction = 1;
                         actualY++;
+                        //System.out.println("FALLBACK 0");
                         fallback = true;
                         break;
                     }
@@ -109,15 +109,16 @@ public class Geometry2 {
                         points[3].setLocation(actualX, actualY);
                         direction = 2;
                         actualX--;
+                        wasHorizontal = false;
 
                         for (int i = 0; i < points[3].y - points[2].y + 1; i++) {
                             steps.remove(steps.size() - 1);
                         }
-                        System.out.println(steps);
+                        //System.out.println(steps);
                         break;
                     }
 
-                    if (!fallback && array[actualY + 1][actualX] == 1) {
+                    if (array[actualY + 1][actualX] == 1) {
                         if (wasHorizontal) {
                             points[2].setLocation(actualX, actualY);
                             wasHorizontal = false;
@@ -132,6 +133,7 @@ public class Geometry2 {
                         actualX = points[1].x;
                         actualY = points[1].y;
                         fallback = true;
+                        //System.out.println("FALLBACK 1");
                         steps.clear();
                         break;
                     }
@@ -145,6 +147,7 @@ public class Geometry2 {
                 case 2: {
 
                     int step;
+                    boolean dir = false;
                     for (int i = steps.size() - 1; i >= 0; i--) {
                         step = steps.get(i);
                         if (step == 0) {
@@ -158,9 +161,18 @@ public class Geometry2 {
                             direction = 1;
                             actualX = points[3].x;
                             actualY = points[3].y;
+                            if (array[actualY + 1][actualX] == 1) {
+                                actualY++;
+                            }
+                            // System.out.println("FALLBACK 2");
                             fallback = true;
+                            dir = true;
                             break;
                         }
+                    }
+
+                    if (dir) {
+                        break;
                     }
 
                     actualY++;
@@ -180,9 +192,14 @@ public class Geometry2 {
                             actualX = points[3].x;
                             actualY = points[3].y;
                             fallback = true;
+                            dir = true;
                             break;
                         }
                         actualX--;
+                    }
+
+                    if (dir) {
+                        break;
                     }
 
                     points[5].setLocation(actualX, actualY);
@@ -254,7 +271,7 @@ public class Geometry2 {
 
                 }
                 case 4: {
-                    System.out.println(actualX + " " + actualY);
+                    //System.out.println(actualX + " " + actualY);
                     int step;
                     for (int i = steps.size() - 1; i >= 0; i--) {
                         step = steps.get(i);
@@ -264,7 +281,7 @@ public class Geometry2 {
                         if (step == 1) {
                             actualY--;
                         }
-                        System.out.println(actualX + " " + actualY);
+                        //System.out.println(actualX + " " + actualY);
                         if (array[actualY][actualX] == 0) {
 
                             direction = 1;
@@ -287,110 +304,6 @@ public class Geometry2 {
                 }
             }
         }
-
-
-        /*while (true) {
-            //System.out.println(actualX + " " + actualY);
-            switch (direction) {
-                case 0: {
-                    if (array[actualY + 1][actualX] == 1 && actualX - points[0].x > 1) {
-                        points[1] = new Point(actualX, actualY);
-                        direction = 1;
-                        actualY++;
-                        continue;
-                    }
-
-
-                    if (array[actualY][actualX + 1] == 0) {
-                        return ellipses;
-                    }
-
-                    actualX++;
-                }
-                case 1: {
-                    if (array[actualY][actualX - 1] == 1 && actualY - points[1].y > 1) {
-                        points[2] = new Point(actualX, actualY);
-                        direction = 2;
-                        actualX--;
-                        continue;
-                    }
-
-                    if (array[actualY + 1][actualX] == 0) {
-                        direction = 0;
-                        actualX = points[1].x;
-                        actualY = points[1].y;
-                        if (array[actualY][actualX + 1] == 0) {
-                            return ellipses;
-                        }
-                        actualX++;
-                        continue;
-                    }
-
-
-                    actualY++;
-                }
-            } else if (direction == 2) {
-
-                if (array[actualY - 1][actualX] == 1 && actualX == points[0].x) {
-                    points[3] = new Point(actualX, actualY);
-                    direction = 3;
-                    actualY--;
-                    continue;
-                }
-
-                if (actualX < points[0].x || array[actualY][actualX - 1] == 0) {
-                    direction = 1;
-                    actualX = points[2].x;
-                    actualY = points[2].y;
-                    if (array[actualY + 1][actualX] == 0) {
-                        direction = 0;
-                        actualX = points[1].x;
-                        actualY = points[1].y;
-                        if (array[actualY][actualX + 1] == 0) {
-                            return rectangles;
-                        }
-                        actualX++;
-                        continue;
-                    }
-                    actualY++;
-                    continue;
-                }
-
-                actualX--;
-            } else {
-                if (actualY == points[0].y) {
-                    rectangles.add(new Rectangle(points));
-                    actualY--;
-                }
-
-                if (actualY < points[0].y || array[actualY - 1][actualX] == 0) {
-                    direction = 2;
-                    actualX = points[3].x;
-                    actualY = points[3].y;
-                    if (array[actualY][actualX - 1] == 0) {
-                        direction = 1;
-                        actualX = points[2].x;
-                        actualY = points[2].y;
-                        if (array[actualY + 1][actualX] == 0) {
-                            direction = 0;
-                            actualX = points[1].x;
-                            actualY = points[1].y;
-                            if (array[actualY][actualX + 1] == 0) {
-                                return rectangles;
-                            }
-                            actualX++;
-                            continue;
-                        }
-                        actualY++;
-                        continue;
-                    }
-                    actualX--;
-                    continue;
-                }
-
-                actualY--;
-            }
-        }*/
     }
 
     static ArrayList<Rectangle> findRectangle(int[][] array, int row, int column) {
@@ -469,7 +382,7 @@ public class Geometry2 {
                 actualX--;
             } else {
                 if (actualY == points[0].y) {
-                    rectangles.add(new Rectangle(points));
+                    rectangles.add(new Rectangle(points.clone()));
                     actualY--;
                 }
 
@@ -517,7 +430,7 @@ public class Geometry2 {
 
     static void printShapes(ArrayList<Shape> shapes) {
         for (int i = 0; i < shapes.size(); i++) {
-            System.out.println(i + " - " + shapes.get(i).getClass() + " " + shapes.get(i).printCorners());
+            System.out.println(i + " - " + shapes.get(i).getName() + " " + shapes.get(i).printCorners());
         }
         System.out.println();
         for (int i = 0; i < shapes.size(); i++) {
@@ -532,18 +445,6 @@ public class Geometry2 {
     }
 
     static String checkPosition(Shape s, Shape s2) {
-        int x = Math.abs(s.center.x - s2.center.x);
-        int y = Math.abs(s.center.y - s2.center.y);
-
-        /*System.out.println(s.printCorners());
-        System.out.println(s.width);
-        System.out.println(s.height);
-        System.out.println(s.center);
-        System.out.println(s2.printCorners());
-        System.out.println(s2.width);
-        System.out.println(s2.height);
-        System.out.println(s2.center);*/
-
         if (s.getTopBound() < s2.getTopBound()
                 && s.getBottomBound() > s2.getBottomBound()
                 && s.getLeftBound() < s2.getLeftBound()
@@ -591,6 +492,7 @@ public class Geometry2 {
             System.out.println("Podaj wektor przemieszczenia? ");
             vector.setLocation(scanner.nextInt(), scanner.nextInt());
             shapes.get(shape).moveShape(vector);
+            System.out.println("Przesunieto figure " + shape + " o wektor (" + vector.x + "," + vector.y + ")");
             do {
                 System.out.println("Chcesz potworzyc? [y/n] ");
                 answer = scanner.next();
@@ -609,10 +511,12 @@ abstract class Shape {
     Point center;
     Point[] corners;
 
+    abstract String getName();
+
     void moveShape(Point vector) {
-        center.setLocation(vector);
+        center.translate(vector.x, vector.y);
         for (int i = 0; i < corners.length; i++) {
-            corners[i].setLocation(vector);
+            corners[i].translate(vector.x, vector.y);
         }
     }
 
@@ -639,6 +543,10 @@ abstract class Shape {
 
 class Rectangle extends Shape {
 
+    String getName() {
+        return "Rectangle";
+    }
+
     Rectangle(Point[] corners) {
         this.corners = corners;
         this.width = corners[1].x - corners[0].x;
@@ -654,6 +562,10 @@ class Rectangle extends Shape {
 }
 
 class Ellipse extends Shape {
+
+    String getName() {
+        return "Ellipse";
+    }
 
     Ellipse(Point[] corners) {
         this.corners = corners;
